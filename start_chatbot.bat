@@ -1,36 +1,39 @@
 @echo off
-title Chatbot Auto Starter
+setlocal
+cd /d "%~dp0"
 
-echo ===============================
-echo Starting Chatbot Environment...
-echo ===============================
+echo ---------------------------------------
+echo   Smart Chatbot Automated Starter
+echo ---------------------------------------
 
-REM ---- STEP 1 : START OLLAMA SERVER ----
-echo Starting Ollama server...
-start cmd /k "ollama serve"
+:: 1. Check if Ollama is already running
+tasklist /FI "IMAGENAME eq ollama.exe" 2>NUL | find /I /N "ollama.exe">NUL
+if "%ERRORLEVEL%"=="0" (
+    echo Ollama is already running.
+) else (
+    echo Starting Ollama...
+    start /min "" ollama serve
+    timeout /t 5 /nobreak >nul
+)
 
-REM Wait for Ollama to start
-timeout /t 5 /nobreak >nul
+:: 2. Ensure model is available
+echo Ensuring AI model (granite3.3:2b) is ready...
+start /min "" ollama run granite3.3:2b ""
 
-echo Loading granite3.3:2b model...
-start cmd /k "ollama run granite3.3:2b"
-
-REM ---- STEP 2 : START PYTHON BACKEND ----
+:: 3. Start Python Backend (Minimized)
+tasklist /FI "IMAGENAME eq python.exe" 2>NUL | find /I /N "python.exe">NUL
+if "%ERRORLEVEL%"=="0" (
+    echo Python backend might be running. Checking port 5000...
+)
 echo Starting Python backend...
+start /min "" python server.py
 
-cd /d "C:\Users\keert\OneDrive\Desktop\chat projects\chatbot"
+:: 4. Wait for server
+timeout /t 3 /nobreak >nul
 
-start cmd /k "python server.py"
+:: 5. Open Web App
+echo Opening Chatbot...
+start "" "http://localhost:5000"
 
-REM Wait for backend server to start
-timeout /t 5 /nobreak >nul
-
-REM ---- STEP 3 : OPEN WEB APP URL ----
-echo Opening Chatbot in browser...
-start "" "http://172.19.183.73:5000"
-
-echo ===============================
-echo Chatbot Started Successfully!
-echo ===============================
-
-pause
+echo Done! You can close this window.
+exit
